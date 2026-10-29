@@ -1,9 +1,9 @@
 """Read a PDF into passages that remember where they are on the page.
 
 PyMuPDF gives text in blocks (roughly paragraphs) with bounding boxes. Chunks are built
-from whole blocks on one page, so a source can be shown by highlighting exactly those
-blocks. A block longer than a chunk is split with LangChain's splitter, and each piece
-highlights its whole block.
+from whole blocks on one page and stop at headings, so a source can be shown by
+highlighting exactly those blocks. A block longer than a chunk is split with LangChain's
+splitter, and each piece highlights its whole block.
 """
 
 import re
@@ -60,6 +60,11 @@ def passages(doc: pymupdf.Document) -> list[Passage]:
                 continue
             text = clean(raw)
             if len(text) < MIN_CHARS:
+                # Too short to keep, but usually a heading: end the passage here so
+                # one passage doesn't straddle two sections
+                if current:
+                    out.append(current)
+                    current = None
                 continue
             rect = [round(v, 1) for v in (x0, y0, x1, y1)]
             if len(text) > CHUNK_CHARS:

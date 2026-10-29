@@ -17,6 +17,20 @@ def test_passages_keep_page_and_position():
     assert 60 < x0 < x1 and 60 < y0 < y1 < 800
 
 
+def test_headings_end_a_passage():
+    doc = pymupdf.open()
+    page = doc.new_page()
+    blocks = [
+        "We used the Adam optimizer with a warmup of four thousand steps.",
+        "5.4 Regularization",
+        "We employ three types of regularization during training.",
+    ]
+    for i, text in enumerate(blocks):
+        page.insert_textbox(pymupdf.Rect(72, 72 + i * 60, 520, 120 + i * 60), text, fontsize=11)
+    ps = pdf.passages(pdf.open_pdf(doc.tobytes()))
+    assert [p.text for p in ps] == [blocks[0], blocks[2]]
+
+
 def test_long_block_is_split():
     long_para = " ".join(f"Sentence number {i} about photovoltaic maintenance." for i in range(60))
     doc = pymupdf.open()

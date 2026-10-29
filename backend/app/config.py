@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     top_k: int = 4
     # Cosine similarity of the best chunk below which we refuse to answer. Calibrated on
-    # a real paper with bge-small: on-topic questions scored 0.61-0.82, off-topic ones
+    # a real paper with bge-small: on-topic questions scored 0.62-0.82, off-topic ones
     # 0.44-0.59 (see docs/DECISIONS.md). The ranges overlap, which is why the model
     # also gets told to decline.
     min_similarity: float = 0.55
