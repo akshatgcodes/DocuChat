@@ -121,3 +121,13 @@ def test_search_is_scoped_to_one_document(owner, doc):
 def test_citation_parser():
     assert rag.citations("A [1]. B [2][3]. C [4, 5]. D [12]") == {1, 2, 3, 4, 5, 12}
     assert rag.citations("no refs") == set()
+
+
+def test_fullwidth_citations_are_normalised(owner, doc, fake_llm):
+    fake_llm("Twice a year【1】, never with a pressure washer【1†L3-L4】.")
+    body = owner.post(
+        f"/api/documents/{doc['id']}/ask",
+        json={"question": "How often should the panels be cleaned?"},
+    ).json()
+    assert body["answer"] == "Twice a year[1], never with a pressure washer[1]."
+    assert body["sources"][0]["cited"]

@@ -76,6 +76,11 @@ def citations(answer: str) -> set[int]:
     }
 
 
+def normalize_citations(answer: str) -> str:
+    """Some models (gpt-oss on Groq) cite as 【1】 or 【1†source】 despite the prompt."""
+    return re.sub(r"【\s*(\d+)(?:\s*†[^】]*)?】", r"[\1]", answer)
+
+
 def build_prompt(question: str, sources: list[Source]) -> list:
     excerpts = "\n\n".join(f"[{s.n}] (page {s.page + 1}) {s.text}" for s in sources if s.used)
     return [
@@ -122,7 +127,7 @@ def ask(db: Session, document_id: int, question: str) -> dict:
     except Exception as e:
         raise GenerationError(f"The language model call failed: {e}") from e
     text = reply.content if isinstance(reply.content, str) else str(reply.content)
-    text = text.strip()
+    text = normalize_citations(text.strip())
 
     if not text or DECLINE in text:
         confidence["level"] = "low"
