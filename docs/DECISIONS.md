@@ -44,7 +44,7 @@ The default is **0.55**: every in-document question passes, and four of six unre
 ### 5. Local embeddings, hosted generation
 **Decision:** fastembed with `BAAI/bge-small-en-v1.5` (ONNX, ~70 MB, CPU). Generation goes through LangChain's `ChatOpenAI` pointed at Groq (default), OpenAI or Ollama.
 **Why:** The threshold depends on embedding scores staying the same, and embedding runs for every passage; local makes it free and stable. One OpenAI-compatible client covers all three generation options.
-**Note:** bge models suggest a query prefix. Measured on the paper above, scores separated better without it, so queries are embedded as-is.
+**Note:** bge models suggest a query prefix. On the paper above, the gap between the lowest in-document score and the highest unrelated score was 0.027 without the prefix and 0.013 with it, so queries are embedded as-is.
 
 ### 6. ChromaDB with a per-document filter
 **Decision:** One Chroma collection, cosine space, every vector tagged with `document_id`; searches filter on it.

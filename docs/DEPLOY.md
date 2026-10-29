@@ -8,7 +8,7 @@ DocuChat is **not deployed yet**. This is the intended setup.
 | API | A service with a **persistent disk** (e.g. Render with a disk mounted at `DATA_DIR`) |
 | Model | Groq |
 
-Uploaded PDFs, Chroma's files and (by default) the SQLite database all live in `DATA_DIR`, so the API needs storage that survives restarts. A free instance with an ephemeral filesystem loses every document on restart. The embedding model needs roughly 300 MB of RAM on top of the app.
+Uploaded PDFs, Chroma's files and (by default) the SQLite database all live in `DATA_DIR`, so the API needs storage that survives restarts. A free instance with an ephemeral filesystem loses every document on restart. Indexing the 15-page test paper peaked at about 1.2 GB of memory in a local run (embedding model, Chroma and PyMuPDF together), so a 512 MB instance is too small.
 
 ## Environment
 
