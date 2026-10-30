@@ -1,11 +1,11 @@
-"""Chroma, through LangChain, holding one vector per chunk tagged with its document."""
+"""Chroma, through LangChain, holding one vector per chunk tagged with its document. With
+VECTOR_STORE=pgvector the same functions use app/pgstore.py instead."""
 
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-from langchain_chroma import Chroma
-
+from app import pgstore
 from app.config import settings
 from app.embeddings import get_embeddings
 
@@ -17,7 +17,10 @@ class Hit:
 
 
 @lru_cache
-def get_store() -> Chroma:
+def get_store():
+    # Imported here so the pgvector setup never loads Chroma (memory on small hosts)
+    from langchain_chroma import Chroma
+
     return Chroma(
         collection_name="chunks",
         embedding_function=get_embeddings(),
@@ -31,6 +34,8 @@ def add(document_id: int, chunks: list[tuple[int, int, str]]) -> None:
     """chunks: (chunk_id, page, text)"""
     if not chunks:
         return
+    if settings.vector_store == "pgvector":
+        return pgstore.add(document_id, chunks)
     get_store().add_texts(
         texts=[text for _, _, text in chunks],
         metadatas=[{"document_id": document_id, "page": page} for _, page, _ in chunks],
@@ -39,6 +44,8 @@ def add(document_id: int, chunks: list[tuple[int, int, str]]) -> None:
 
 
 def search(document_id: int, query: str, k: int) -> list[Hit]:
+    if settings.vector_store == "pgvector":
+        return [Hit(*row) for row in pgstore.search(document_id, query, k)]
     results = get_store().similarity_search_with_score(
         query, k=k, filter={"document_id": document_id}
     )
@@ -46,5 +53,15 @@ def search(document_id: int, query: str, k: int) -> list[Hit]:
 
 
 def remove(chunk_ids: list[int]) -> None:
-    if chunk_ids:
+    if chunk_ids and settings.vector_store == "pgvector":
+        pgstore.remove(chunk_ids)
+    elif chunk_ids:
         get_store().delete(ids=[str(c) for c in chunk_ids])
+
+
+def reset() -> None:
+    """Empty the store (tests)."""
+    if settings.vector_store == "pgvector":
+        pgstore.reset()
+    else:
+        get_store().reset_collection()

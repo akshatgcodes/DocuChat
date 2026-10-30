@@ -35,6 +35,7 @@ env:
   CI_DIRS: "backend frontend"
   NODE_DEFAULT_VERSION: "22"
   PYTHON_DEFAULT_VERSION: "3.12"
+  TEST_DATABASE_URL: "postgresql+psycopg://ci:ci@localhost:5432/ci"
   # Build-time env vars: add placeholders here if the build needs them, e.g.
   # DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
   # NEXT_PUBLIC_APP_URL: "http://localhost:3000"
@@ -45,6 +46,17 @@ jobs:
     name: ci
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # The backend tests also run on Postgres + pgvector here, the setup used in production
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17   # Postgres with the pgvector extension
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 3s --health-retries 20
     steps:
       - uses: actions/checkout@v7
 
@@ -125,6 +137,9 @@ jobs:
             fi
             if [ -d tests ] || ls test_*.py */test_*.py >/dev/null 2>&1; then
               echo "::group::pytest"; pip install pytest; $PY python -m pytest -q; echo "::endgroup::"
+              if grep -qs pgvector pyproject.toml; then
+                echo "::group::pytest (pgvector store)"; VECTOR_STORE=pgvector $PY python -m pytest -q; echo "::endgroup::"
+              fi
             fi
           }
 

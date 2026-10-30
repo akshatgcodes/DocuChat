@@ -25,9 +25,16 @@ class Settings(BaseSettings):
     llm_model: str = ""  # defaults to the provider's model above
     groq_api_key: str = ""  # accepted as an alias for llm_api_key
 
-    # Retrieval. "hash" is a dependency-free stand-in used by the tests.
+    # Retrieval. Embeddings run locally by default; "openai" uses any OpenAI-compatible
+    # embeddings API instead (see docs/DEPLOY.md). "hash" is a stand-in used by the tests.
     embeddings: str = "fastembed"
     embedding_model: str = "BAAI/bge-small-en-v1.5"
+    embeddings_base_url: str = ""
+    embeddings_api_key: str = ""
+    embedding_dimensions: int = 0  # 0 = the model's default
+    # "chroma" keeps vectors on disk in DATA_DIR; "pgvector" keeps them in Postgres, for
+    # hosts without a persistent disk
+    vector_store: str = "chroma"
     top_k: int = 4
     # Cosine similarity of the best chunk below which we refuse to answer. Calibrated on
     # a real paper with bge-small: on-topic questions scored 0.62-0.82, off-topic ones

@@ -1,10 +1,12 @@
 import os
 import tempfile
 
-# Settings are read at import time, so point everything at throwaway locations first
+# Settings are read at import time, so point everything at throwaway locations first.
+# TEST_DATABASE_URL runs the suite on Postgres instead (with VECTOR_STORE=pgvector, the
+# pgvector store too)
 _tmp = tempfile.mkdtemp()
 os.environ.update(
-    DATABASE_URL=f"sqlite:///{_tmp}/test.db",
+    DATABASE_URL=os.environ.get("TEST_DATABASE_URL") or f"sqlite:///{_tmp}/test.db",
     DATA_DIR=_tmp,
     APP_PASSWORD="test-pass",
     EMBEDDINGS="hash",  # no model download in tests
@@ -68,7 +70,7 @@ class FakeChat:
 def client():
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
-    store.get_store().reset_collection()
+    store.reset()
     with TestClient(app) as c:
         yield c
 
