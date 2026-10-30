@@ -7,6 +7,7 @@ from app import auth
 from app.config import settings
 from app.db import Base, engine
 from app.routers import documents
+from app.site import mount_site
 
 Path(settings.data_dir).mkdir(parents=True, exist_ok=True)
 # Three small tables, so create_all on startup instead of a migration tool
@@ -30,3 +31,8 @@ app.include_router(documents.router)
 def health() -> dict:
     base_url, model, _ = settings.llm
     return {"ok": True, "llm": {"provider": settings.llm_provider, "model": model}}
+
+
+# Must come after every API route (see app/site.py)
+if settings.site_dir:
+    mount_site(app, settings.site_dir)
