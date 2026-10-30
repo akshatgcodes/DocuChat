@@ -60,9 +60,8 @@ def test_title_falls_back_to_filename():
     assert pdf.title_of(doc, "Annual Report.PDF") == "Annual Report"
 
 
-def test_render_highlights(tmp_path):
-    path = tmp_path / "a.pdf"
-    path.write_bytes(make_pdf())
-    plain = pdf.render_page(str(path), 1, [])
-    marked = pdf.render_page(str(path), 1, [[72, 72, 520, 160]])
+def test_render_highlights():
+    data = make_pdf()
+    plain = pdf.render_page(data, 1, [])
+    marked = pdf.render_page(data, 1, [[72, 72, 520, 160]])
     assert plain.startswith(b"\x89PNG") and plain != marked

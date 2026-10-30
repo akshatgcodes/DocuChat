@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, LargeBinary, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db import Base, JsonColumn
@@ -23,10 +23,24 @@ class Document(Base):
     messages: Mapped[list["Message"]] = relationship(
         cascade="all, delete-orphan", order_by="Message.id"
     )
+    file: Mapped["PdfFile | None"] = relationship(cascade="all, delete-orphan")
+
+
+class PdfFile(Base):
+    """The uploaded PDF itself. In the database rather than on disk, so hosts without a
+    persistent disk keep it, and in its own table so listing documents never loads it."""
+
+    __tablename__ = "pdf_files"
+
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("documents.id", ondelete="CASCADE"), primary_key=True
+    )
+    data: Mapped[bytes] = mapped_column(LargeBinary)
 
 
 class Chunk(Base):
-    """A passage of the PDF. Text and vectors live in Chroma; this keeps where it sits."""
+    """A passage of the PDF. Its vector lives in the vector store under the chunk id; this
+    keeps where it sits."""
 
     __tablename__ = "chunks"
 

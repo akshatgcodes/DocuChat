@@ -9,19 +9,9 @@ from app import pdf, rag, store
 from app.auth import require_owner
 from app.config import settings
 from app.db import get_db
-from app.models import Chunk, Document, Message
+from app.models import Chunk, Document, Message, PdfFile
 
 router = APIRouter(prefix="/api", tags=["documents"], dependencies=[Depends(require_owner)])
-
-
-def _uploads() -> Path:
-    path = Path(settings.data_dir) / "uploads"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _file(doc_id: int) -> Path:
-    return _uploads() / f"{doc_id}.pdf"
 
 
 def _doc(db: Session, doc_id: int) -> Document:
@@ -76,6 +66,7 @@ def upload(file: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     d = Document(filename=filename, title=title, pages=pages, size=len(data))
     db.add(d)
     db.flush()
+    d.file = PdfFile(document_id=d.id, data=data)
     rows = [
         Chunk(document_id=d.id, idx=i, page=p.page, text=p.text, rects=p.rects)
         for i, p in enumerate(passages)
@@ -84,7 +75,6 @@ def upload(file: UploadFile = File(...), db: Session = Depends(get_db)) -> dict:
     db.flush()
     try:
         store.add(d.id, [(c.id, c.page, c.text) for c in rows])
-        _file(d.id).write_bytes(data)
     except Exception:
         db.rollback()
         store.remove([c.id for c in rows])
@@ -103,7 +93,6 @@ def get_document(doc_id: int, db: Session = Depends(get_db)) -> dict:
 def delete_document(doc_id: int, db: Session = Depends(get_db)) -> Response:
     d = _doc(db, doc_id)
     store.remove([c.id for c in d.chunks])
-    _file(d.id).unlink(missing_ok=True)
     db.delete(d)
     db.commit()
     return Response(status_code=204)
@@ -125,7 +114,7 @@ def page_image(
         if c is None or c.document_id != doc_id or c.page != page:
             raise HTTPException(404, "That passage isn't on this page")
         rects = c.rects
-    png = pdf.render_page(str(_file(doc_id)), page, rects)
+    png = pdf.render_page(d.file.data, page, rects)
     return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=3600"})
 
 
