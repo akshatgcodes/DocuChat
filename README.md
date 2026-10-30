@@ -16,6 +16,9 @@
 </p>
 
 <p align="center">
+  <a href="https://docuchat.akshatgcodes.in">
+    <img src="https://img.shields.io/badge/live_demo-2f54eb-2f54eb?style=flat-square" alt="Live Demo">
+  </a>
   <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React">
   <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
@@ -31,6 +34,9 @@
 Upload a PDF and ask it questions. The document is split into passages, embedded into ChromaDB, and each question retrieves the closest passages before a language model answers from them. Every claim in an answer carries a numbered citation; click it and the page opens with that passage highlighted.
 
 The part that separates it from a basic RAG demo is **retrieval confidence**. If even the closest passage isn't similar enough to the question, DocuChat answers *"I don't have enough information in this document to answer that"* and never calls the model. When passages are related but don't contain the answer, the model is told to decline too, and the UI says which of the two happened.
+
+> **Live demo →** [docuchat.akshatgcodes.in](https://docuchat.akshatgcodes.in)
+> Log in with the demo password `demo1234` and upload a PDF. The free host sleeps when idle, so the first load can take up to a minute.
 
 ---
 
@@ -52,7 +58,7 @@ The part that separates it from a basic RAG demo is **retrieval confidence**. If
 |---|---|
 | Frontend | React 19 · TypeScript · Vite · React Router |
 | Backend | FastAPI · LangChain (splitter, Chroma store, ChatOpenAI) · PyMuPDF |
-| Retrieval | ChromaDB (cosine) · fastembed `bge-small-en-v1.5` |
+| Retrieval | ChromaDB (cosine) · fastembed `bge-small-en-v1.5`; on the demo, pgvector in Postgres and Gemini `gemini-embedding-001` |
 | Generation | Groq / OpenAI / Ollama through the OpenAI-compatible API |
 | Storage | SQLite (or Postgres) for documents, passages and chat; files on disk |
 | Tooling | uv · pytest · Vitest · ruff · GitHub Actions |
@@ -84,6 +90,8 @@ A passage made of whole blocks on one page has exact coordinates, so the source 
 
 **Why local embeddings with a hosted model for answers?**
 Embeddings run on every passage and every question, and the confidence threshold depends on their scores staying stable. A small local model makes that free and repeatable. Answer quality is where a large model matters, so that part is hosted and swappable.
+
+The live demo is the exception: its free 512 MB host can't hold the local model while it embeds a long PDF, so it uses `EMBEDDINGS=openai` with Gemini and `VECTOR_STORE=pgvector`, with the thresholds measured again for that model. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 **What would you do differently in v2?**
 Rewrite follow-up questions into standalone ones before retrieval (today each question is answered on its own), add OCR for scanned PDFs, and calibrate the threshold per document from its own score distribution.

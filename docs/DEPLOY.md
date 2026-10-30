@@ -1,25 +1,27 @@
 # Deploy
 
-DocuChat is **not deployed yet**. This is the intended setup.
+## Live demo
 
-| Part | Platform |
+Live at **https://docuchat.akshatgcodes.in**: one free Render web service (Python runtime, Singapore), connected to this repo, so every push to `main` deploys. The free instance sleeps after 15 minutes idle and takes up to a minute to wake.
+
+The API serves the whole site when `SITE_DIR` is set (`backend/app/site.py`): the landing page (`landing/`, a Next.js static export) at `/`, the React app at `/app/`, and the API at `/api`.
+
+| Setting | Value |
 |---|---|
-| Frontend | Vercel (`frontend/`, build `npm run build`, output `dist`, SPA rewrite to `index.html`) |
-| API | A service with a **persistent disk** (e.g. Render with a disk mounted at `DATA_DIR`) |
-| Model | Groq |
+| Build | `pip install uv && cd backend && uv sync --frozen --no-dev && cd ../landing && npm ci && npm run build && cd ../frontend && npm ci && VITE_BASE=/app/ npm run build` |
+| Start | `cd backend && .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Health check | `/health` |
 
-Uploaded PDFs, Chroma's files and (by default) the SQLite database all live in `DATA_DIR`, so the API needs storage that survives restarts. A free instance with an ephemeral filesystem loses every document on restart. Indexing the 15-page test paper peaked at about 1.2 GB of memory in a local run (embedding model, Chroma and PyMuPDF together), so a 512 MB instance is too small.
+A 512 MB instance with no persistent disk changes two things (see docs/DECISIONS.md):
 
-## Environment
+- **Vectors** go to Postgres with pgvector (`VECTOR_STORE=pgvector`) instead of Chroma on disk, and uploaded PDFs are stored in the database (they always are).
+- **Embeddings** come from Gemini's OpenAI-compatible API instead of the local model, which peaked above 512 MB while embedding a long document.
 
-On the API:
+Environment: `DATABASE_URL` (Neon), `SESSION_SECRET`, `APP_PASSWORD` (`demo1234` on the demo), `LLM_PROVIDER=groq`, `LLM_API_KEY`, `VECTOR_STORE=pgvector`, `EMBEDDINGS=openai`, `EMBEDDINGS_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`, `EMBEDDING_MODEL=gemini-embedding-001`, `EMBEDDING_DIMENSIONS=768`, `EMBEDDINGS_API_KEY`, `MIN_SIMILARITY` and `HIGH_SIMILARITY` (calibrated for Gemini), `DATA_DIR=/tmp/docuchat`, `SITE_DIR=/opt/render/project/src`, `FRONTEND_URL`, `PYTHON_VERSION`.
 
-- `APP_PASSWORD` (strong) and `SESSION_SECRET` (long random)
-- `LLM_PROVIDER=groq`, `LLM_API_KEY`
-- `DATA_DIR=/var/data` (the mounted disk)
-- `FRONTEND_URL=https://<frontend-host>`, `CROSS_SITE_COOKIES=true`
+## Running it elsewhere
 
-On the frontend: `VITE_API_URL=https://<api-host>`.
+With the defaults (Chroma in `DATA_DIR`, local embeddings), any host with a persistent disk and about 1.2 GB of memory works: `cd backend && uv run uvicorn app.main:app`, with the frontend built separately or served by the API through `SITE_DIR`.
 
 ---
 
