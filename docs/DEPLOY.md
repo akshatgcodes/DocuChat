@@ -17,7 +17,7 @@ A 512 MB instance with no persistent disk changes two things (see docs/DECISIONS
 - **Vectors** go to Postgres with pgvector (`VECTOR_STORE=pgvector`) instead of Chroma on disk, and uploaded PDFs are stored in the database (they always are).
 - **Embeddings** come from Gemini's OpenAI-compatible API instead of the local model, which peaked above 512 MB while embedding a long document.
 
-Environment: `DATABASE_URL` (Neon), `SESSION_SECRET`, `APP_PASSWORD` (`demo1234` on the demo), `LLM_PROVIDER=groq`, `LLM_API_KEY`, `VECTOR_STORE=pgvector`, `EMBEDDINGS=openai`, `EMBEDDINGS_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`, `EMBEDDING_MODEL=gemini-embedding-001`, `EMBEDDING_DIMENSIONS=768`, `EMBEDDINGS_API_KEY`, `MIN_SIMILARITY` and `HIGH_SIMILARITY` (calibrated for Gemini), `DATA_DIR=/tmp/docuchat`, `SITE_DIR=/opt/render/project/src`, `FRONTEND_URL`, `PYTHON_VERSION`.
+Environment: `DATABASE_URL` (Neon), `SESSION_SECRET`, `APP_PASSWORD` (`demo1234` on the demo), `LLM_PROVIDER=groq`, `LLM_API_KEY`, `VECTOR_STORE=pgvector`, `EMBEDDINGS=openai`, `EMBEDDINGS_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`, `EMBEDDING_MODEL=gemini-embedding-001`, `EMBEDDING_DIMENSIONS=768`, `EMBEDDINGS_API_KEY`, `MIN_SIMILARITY=0.54` and `HIGH_SIMILARITY=0.70` (calibrated for Gemini, see DECISIONS.md), `DATA_DIR=/tmp/docuchat`, `SITE_DIR=/opt/render/project/src`, `FRONTEND_URL`, `PYTHON_VERSION`.
 
 ## Running it elsewhere
 

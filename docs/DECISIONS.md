@@ -27,6 +27,27 @@ Measured with `bge-small-en-v1.5` on *Attention Is All You Need* (15 pages, 70 p
 The default is **0.55**: every in-document question passes, and four of six unrelated ones are stopped before generation. The two that get through are handled by decision 2. `HIGH_SIMILARITY` (0.70) only affects the label shown.
 **Trade-off:** The numbers are for one model and one document. A different embedding model needs re-measuring, and dense documents may need a different cut-off; it's an environment variable for that reason.
 
+#### Calibration for the hosted demo (Gemini)
+
+The demo runs on a 512 MB instance, too small for the local model, so it embeds with `gemini-embedding-001` at 768 dimensions. Same paper, same questions:
+
+| Question | Score | |
+|---|---|---|
+| What BLEU score did the big model get on English-to-German? | 0.810 | in document |
+| What is multi-head attention? | 0.776 | in document |
+| Why use self-attention instead of recurrence? | 0.771 | in document |
+| What optimizer was used for training? | 0.770 | in document |
+| How many layers does the encoder have? | 0.741 | in document |
+| What is the dropout rate? | 0.578 | in document |
+| How do vaccines train the immune system? | 0.511 | not in document |
+| How does photosynthesis work? | 0.496 | not in document |
+| What is the price of Bitcoin? | 0.491 | not in document |
+| Who won the 2018 FIFA World Cup? | 0.465 | not in document |
+| How do I bake sourdough bread? | 0.460 | not in document |
+| What is the capital of Australia? | 0.445 | not in document |
+
+Gemini separates the two groups cleanly, so the demo sets `MIN_SIMILARITY=0.54`: every in-document question passes and all six unrelated ones are stopped. `HIGH_SIMILARITY` stays at 0.70.
+
 ### 2. The model is also allowed to decline
 **Decision:** The system prompt says to use only the excerpts, cite them, and reply exactly `NOT_IN_DOCUMENT` when they don't contain the answer. That reply becomes "not enough information" with reason `model_declined`.
 **Why:** Similarity measures topic, not whether the specific fact is there ("What colour is the logo?" scores well against passages about the model). The model catches that case; the threshold catches the off-topic case without spending a call.
